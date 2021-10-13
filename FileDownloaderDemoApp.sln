@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31702.278
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileDownloaderDemoApp", "FileDownloaderDemoApp\FileDownloaderDemoApp.csproj", "{7E3F827A-675B-4C14-8602-164758EC3386}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileDownloader", "FileDownloader\FileDownloader.csproj", "{F7C06B0C-7324-4FD2-B720-525DE9A0357F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileDownloader", "FileDownloader\FileDownloader.csproj", "{F7C06B0C-7324-4FD2-B720-525DE9A0357F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
