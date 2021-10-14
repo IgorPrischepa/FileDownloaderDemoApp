@@ -6,7 +6,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NLog" Version="4.7.11" />
+    <PackageReference Include="NLog.Config" Version="4.7.11" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\FileDownloader\FileDownloader.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="C:\Users\uropb\.nuget\packages\nlog.config\4.7.11\contentFiles\any\any\NLog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

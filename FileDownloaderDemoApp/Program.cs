@@ -17,7 +17,6 @@ namespace FileDownloaderDemoApp
 
             EnsureDirectoryCreated(defaultPathToSave);
 
-
             var fileDonwloader = new Downloader.FileDownloader();
 
             fileDonwloader.OnDownloaded += SucceessDownload;
@@ -42,20 +41,25 @@ namespace FileDownloaderDemoApp
         private static void FailedDownload(string filePath, Exception exception)
         {
             failedCount++;
+
             Console.WriteLine($"{exception.Message}");
+
             UpdateInfoInCosole();
         }
 
         private static void SucceessDownload(string obj)
         {
             downloadedCount++;
+
             Console.WriteLine($"{obj} downloaded");
+
             UpdateInfoInCosole();
         }
 
         private static void UpdateInfoInCosole()
         {
             var progress = ((downloadedCount + failedCount) * 100) / fileCount;
+
             Console.Title = $"Total:{fileCount} Downloaded:{downloadedCount} Failed:{failedCount} Progress: {progress}%";
 
             if (progress == 100)

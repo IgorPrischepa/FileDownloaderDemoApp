@@ -6,6 +6,8 @@ namespace FileDownloader.Contract
     {
         void AddFileToDownloadingQueue(string fileId, string url, string pathToSave);
 
+        void SetDegreeOfParallelism(int degreeOfParallelism);
+
         event Action<string> OnDownloaded;
 
         event Action<string, Exception> OnFailed;
