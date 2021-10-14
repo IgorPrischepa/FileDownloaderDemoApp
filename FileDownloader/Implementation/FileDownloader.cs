@@ -1,4 +1,5 @@
 ﻿using FileDownloader.Contract;
+using FileDownloader.Models;
 using System;
 using System.Collections.Concurrent;
 using System.IO;
@@ -17,9 +18,11 @@ namespace FileDownloader.Implementation
         private static int ParallelismValue = 4;
         static Semaphore sem = new Semaphore(ParallelismValue, ParallelismValue);
 
-        Thread DownloadThread;
-
         private ConcurrentQueue<QueueItem> downloadQueue = new();
+
+        Thread downloadThread;
+
+        private static object sync = new();
 
         public FileDownloader()
         {
@@ -38,6 +41,7 @@ namespace FileDownloader.Implementation
 
         private void TryToGetItemForDownload()
         {
+
             if (!downloadQueue.IsEmpty)
             {
                 foreach (var item in downloadQueue)
@@ -45,12 +49,16 @@ namespace FileDownloader.Implementation
                     bool isSuccessful = downloadQueue.TryDequeue(out QueueItem queueItem);
                     if (isSuccessful)
                     {
-                        DownloadThread = new Thread(new ParameterizedThreadStart(DownloadFileAndSaveToDiskAsync));
-                        DownloadThread.Start(queueItem);
+                        lock (sync)
+                        {
+                            downloadThread = new Thread(new ParameterizedThreadStart(DownloadFileAndSaveToDiskAsync));
+                            downloadThread.Name = queueItem.FileId;
+                            downloadThread.Start(queueItem);
+
+                        }
                     }
                 }
             }
-
         }
 
         private async void DownloadFileAndSaveToDiskAsync(object item)
@@ -68,24 +76,46 @@ namespace FileDownloader.Implementation
             else
             {
                 sem.WaitOne();
-                using (HttpClient httpClient = new())
+                try
                 {
-                    var result = await httpClient.GetByteArrayAsync(queueItem.Url);
 
-                    using (FileStream fw = new FileStream(pathname, FileMode.CreateNew, FileAccess.Write))
+                    using (HttpClient httpClient = new())
                     {
-                        await fw.WriteAsync(result);
-                    }
-                }
+                        var result = await httpClient.GetByteArrayAsync(queueItem.Url);
 
-                OnDownloaded?.Invoke(queueItem.FileId);
-                sem.Release();
+                        using (FileStream fw = new FileStream(pathname, FileMode.CreateNew, FileAccess.Write))
+                        {
+                            await fw.WriteAsync(result);
+                        }
+                    }
+
+                    OnDownloaded?.Invoke(queueItem.FileId);
+                }
+                catch (InvalidOperationException invalidOperationException)
+                {
+
+                    OnFailed?.Invoke(queueItem.FileId, invalidOperationException);
+                }
+                catch (HttpRequestException httpRequestException)
+                {
+                    OnFailed?.Invoke(queueItem.FileId, httpRequestException);
+                }
+                catch (TaskCanceledException takeCancelException)
+                {
+                    OnFailed?.Invoke(queueItem.FileId, takeCancelException);
+                }
+                finally
+                {
+                    sem.Release();
+                }
             }
+
         }
 
         public void SetDegreeOfParallelism(int degreeOfParallelism)
         {
             ParallelismValue = degreeOfParallelism;
         }
+
     }
 }
