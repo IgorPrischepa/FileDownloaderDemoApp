@@ -46,7 +46,7 @@ namespace FileDownloader.Implementation
         {
             string pathname = Path.Combine(queueItem.PathToSave, queueItem.FileId);
 
-            if (File.Exists(queueItem.PathToSave))
+            if (File.Exists(pathname))
             {
                 var exception = new InvalidOperationException($"File {pathname} already exists.");
 
