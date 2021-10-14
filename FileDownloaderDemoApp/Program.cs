@@ -15,6 +15,8 @@ namespace FileDownloaderDemoApp
             var defaultPathToSave = "Downloaded";
             var defaultPathToListOfUrls = "download_list.txt";
 
+            EnsureDirectoryCreated(defaultPathToSave);
+
 
             var fileDonwloader = new Downloader.FileDownloader();
 
@@ -32,27 +34,43 @@ namespace FileDownloaderDemoApp
                     fileDonwloader.AddFileToDownloadingQueue(fileId, urlFromFile, defaultPathToSave);
                 }
             }
+
             Console.WriteLine("To interrupt download process and exit, please press any key");
             Console.ReadKey();
         }
 
-        private static void FailedDownload(string arg1, Exception arg2)
+        private static void FailedDownload(string filePath, Exception exception)
         {
             failedCount++;
+            Console.WriteLine($"{exception.Message}");
             UpdateInfoInCosole();
         }
 
         private static void SucceessDownload(string obj)
         {
             downloadedCount++;
+            Console.WriteLine($"{obj} downloaded");
             UpdateInfoInCosole();
         }
 
-
-
         private static void UpdateInfoInCosole()
         {
-            Console.Title = $"{(downloadedCount * 100) / fileCount} Total:{fileCount} Downloaded:{downloadedCount} Failed:{failedCount}";
+            var progress = ((downloadedCount + failedCount) * 100) / fileCount;
+            Console.Title = $"Total:{fileCount} Downloaded:{downloadedCount} Failed:{failedCount} Progress: {progress}%";
+
+            if (progress == 100)
+            {
+                Console.WriteLine($"Precceded all urls. Successfuly download: {downloadedCount}. Failed: {failedCount}");
+                Console.WriteLine("Press any key to exit.");
+            }
+        }
+
+        private static void EnsureDirectoryCreated(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
         }
     }
 }
