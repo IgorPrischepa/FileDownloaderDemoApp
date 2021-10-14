@@ -1,4 +1,4 @@
-﻿namespace FileDownloader.Implementation
+﻿namespace FileDownloader.Models
 {
     public class QueueItem
     {
