@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.IO;
 using Downloader = FileDownloader.Implementation;
 
@@ -6,21 +7,28 @@ namespace FileDownloaderDemoApp
 {
     class Program
     {
+
         public static int fileCount = 0;
         public static int downloadedCount = 0;
         public static int failedCount = 0;
+
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         static void Main()
         {
             var defaultPathToSave = "Downloaded";
             var defaultPathToListOfUrls = "download_list.txt";
 
+            logger.Info($"Path to save files: {defaultPathToSave}");
+            logger.Info($"Path to file with urls: {defaultPathToListOfUrls}");
+
             EnsureDirectoryCreated(defaultPathToSave);
 
-            var fileDonwloader = new Downloader.FileDownloader();
+            var fileDownloader = new Downloader.FileDownloader();
+            fileDownloader.SetDegreeOfParallelism(2);
 
-            fileDonwloader.OnDownloaded += SucceessDownload;
-            fileDonwloader.OnFailed += FailedDownload;
+            fileDownloader.OnDownloaded += SucceessDownload;
+            fileDownloader.OnFailed += FailedDownload;
 
             using (StreamReader sr = new(path: defaultPathToListOfUrls))
             {
@@ -30,7 +38,7 @@ namespace FileDownloaderDemoApp
                     var startpos = urlFromFile.LastIndexOf('/') + 1;
                     var fileId = urlFromFile[startpos..];
                     fileCount++;
-                    fileDonwloader.AddFileToDownloadingQueue(fileId, urlFromFile, defaultPathToSave);
+                    fileDownloader.AddFileToDownloadingQueue(fileId, urlFromFile, defaultPathToSave);
                 }
             }
 
@@ -43,6 +51,12 @@ namespace FileDownloaderDemoApp
             failedCount++;
 
             Console.WriteLine($"{exception.Message}");
+            logger.Error($"{exception.Message}");
+            if (exception.StackTrace != null)
+            {
+                logger.Error($"{exception.StackTrace}");
+            }
+
 
             UpdateInfoInCosole();
         }
@@ -74,6 +88,7 @@ namespace FileDownloaderDemoApp
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);
+                logger.Info("Directory has been created.");
             }
         }
     }
