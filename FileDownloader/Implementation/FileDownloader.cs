@@ -11,6 +11,7 @@ namespace FileDownloader.Implementation
     {
         public event Action<string> OnDownloaded;
         public event Action<string, Exception> OnFailed;
+
         private event Action OnAddToQueue;
         private ConcurrentQueue<QueueItem> DownloadQueue = new();
 
@@ -24,6 +25,7 @@ namespace FileDownloader.Implementation
             Task.Run(() =>
             {
                 DownloadQueue.Enqueue(new QueueItem() { FileId = fileId, Url = url, PathToSave = pathToSave });
+                //Think about it
                 OnAddToQueue();
             });
         }
@@ -40,26 +42,29 @@ namespace FileDownloader.Implementation
             }
         }
 
-        private void DownloadFileAndSaveToDiskAsync(QueueItem queueItem)
+        private async Task DownloadFileAndSaveToDiskAsync(QueueItem queueItem)
         {
-            string pathname = Path.GetFullPath($"{queueItem.PathToSave}/{queueItem.FileId}");
+            string pathname = Path.Combine(queueItem.PathToSave, queueItem.FileId);
+
             if (File.Exists(queueItem.PathToSave))
             {
                 var exception = new InvalidOperationException($"File {pathname} already exists.");
 
-                OnFailed($"File {pathname} already exists.", exception);
+                OnFailed?.Invoke($"File {pathname} already exists.", exception);
 
                 throw exception;
             }
 
             using (HttpClient httpClient = new())
             {
-                var result = httpClient.GetAsync(queueItem.Url);
-                using (StreamWriter sw = new(path: queueItem.PathToSave))
+                var result = await httpClient.GetByteArrayAsync(queueItem.Url);
+
+                using (FileStream fw = new FileStream(pathname, FileMode.CreateNew, FileAccess.Write))
                 {
-                    sw.Write(result.Result.Content);
+                    await fw.WriteAsync(result);
                 }
-                OnDownloaded(queueItem.FileId);
+
+                OnDownloaded?.Invoke(queueItem.FileId);
             }
         }
     }

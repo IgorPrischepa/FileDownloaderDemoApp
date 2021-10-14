@@ -1,5 +1,5 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+﻿using System;
+using System.IO;
 using Downloader = FileDownloader.Implementation;
 
 namespace FileDownloaderDemoApp
@@ -23,6 +23,7 @@ namespace FileDownloaderDemoApp
                 }
             }
 
+            Console.ReadKey();
         }
     }
 }
