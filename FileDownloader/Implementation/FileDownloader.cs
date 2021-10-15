@@ -15,10 +15,9 @@ namespace FileDownloader.Implementation
         public event Action<string, Exception> OnFailed;
         private event Action OnAddToQueue;
 
-        private static int ParallelismValue = 4;
-        private static int ThreadCount = 0;
+        private static int parallelismValue = 4;
+        private static int threadCount = 0;
 
-        static Semaphore sem = new Semaphore(ParallelismValue, ParallelismValue);
 
         private ConcurrentQueue<QueueItem> downloadQueue = new();
 
@@ -39,10 +38,9 @@ namespace FileDownloader.Implementation
 
         private void TryToGetItemForDownload()
         {
-
-            if (!downloadQueue.IsEmpty)
+            if (threadCount <= parallelismValue && !downloadQueue.IsEmpty)
             {
-                foreach (var item in downloadQueue)
+                for (int i = threadCount; i <= parallelismValue; i++)
                 {
                     bool isSuccessful = downloadQueue.TryDequeue(out QueueItem queueItem);
                     if (isSuccessful)
@@ -52,7 +50,6 @@ namespace FileDownloader.Implementation
                             downloadThread = new Thread(new ParameterizedThreadStart(DownloadFileAndSaveToDiskAsync));
                             downloadThread.Name = queueItem.FileId;
                             downloadThread.Start(queueItem);
-
                         }
                     }
                 }
@@ -72,7 +69,6 @@ namespace FileDownloader.Implementation
             }
             else
             {
-                sem.WaitOne();
                 try
                 {
                     using (HttpClient httpClient = new())
@@ -85,8 +81,6 @@ namespace FileDownloader.Implementation
                             }
                         }
                     }
-
-                    OnDownloaded?.Invoke(queueItem.FileId);
                 }
                 catch (InvalidOperationException invalidOperationException)
                 {
@@ -104,16 +98,14 @@ namespace FileDownloader.Implementation
                 {
                     OnFailed?.Invoke(queueItem.FileId, ioException);
                 }
-                finally
-                {
-                    sem.Release();
-                }
+                OnDownloaded?.Invoke(queueItem.FileId);
             }
+            threadCount--;
         }
 
         public void SetDegreeOfParallelism(int degreeOfParallelism)
         {
-            ParallelismValue = degreeOfParallelism;
+            parallelismValue = degreeOfParallelism;
         }
     }
 }
