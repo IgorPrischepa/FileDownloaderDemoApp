@@ -24,33 +24,43 @@ namespace FileDownloader.Implementation
         Thread downloadThread;
 
         private static object sync_creating_task = new();
+        private static object syncCounterEdit = new();
 
         public FileDownloader()
         {
-            OnAddToQueue += TryToGetItemForDownload;
+            Task.Run(() =>
+            {
+                while (true)
+                {
+                    if (threadCount <= parallelismValue && !downloadQueue.IsEmpty)
+                    {
+                        TryToGetItemForDownload();
+                    };
+                };
+            });
         }
 
         public void AddFileToDownloadingQueue(string fileId, string url, string pathToSave)
         {
             downloadQueue.Enqueue(new QueueItem() { FileId = fileId, Url = url, PathToSave = pathToSave });
-            OnAddToQueue();
         }
 
         private void TryToGetItemForDownload()
         {
-            if (threadCount <= parallelismValue && !downloadQueue.IsEmpty)
+            for (int i = threadCount; i < parallelismValue; i++)
             {
-                for (int i = threadCount; i <= parallelismValue; i++)
+                bool isSuccessful = downloadQueue.TryDequeue(out QueueItem queueItem);
+                if (isSuccessful)
                 {
-                    bool isSuccessful = downloadQueue.TryDequeue(out QueueItem queueItem);
-                    if (isSuccessful)
+                    lock (syncCounterEdit)
                     {
-                        lock (sync_creating_task)
-                        {
-                            downloadThread = new Thread(new ParameterizedThreadStart(DownloadFileAndSaveToDiskAsync));
-                            downloadThread.Name = queueItem.FileId;
-                            downloadThread.Start(queueItem);
-                        }
+                        threadCount++;
+                    }
+                    lock (sync_creating_task)
+                    {
+                        downloadThread = new Thread(new ParameterizedThreadStart(DownloadFileAndSaveToDiskAsync));
+                        downloadThread.Name = queueItem.FileId;
+                        downloadThread.Start(queueItem);
                     }
                 }
             }
@@ -100,7 +110,10 @@ namespace FileDownloader.Implementation
                 }
                 OnDownloaded?.Invoke(queueItem.FileId);
             }
-            threadCount--;
+            lock (syncCounterEdit)
+            {
+                threadCount--;
+            }
         }
 
         public void SetDegreeOfParallelism(int degreeOfParallelism)
