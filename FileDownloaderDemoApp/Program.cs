@@ -12,10 +12,16 @@ namespace FileDownloaderDemoApp
         public static int downloadedCount = 0;
         public static int failedCount = 0;
 
+        private static object syncDownloadCounter = new();
+        private static object syncFailedCounter = new();
+        private static object syncAcccessToCounter = new();
+
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         static void Main()
         {
+            //Console.WriteLine("To interrupt download process and exit, please press any key");
+
             var defaultPathToSave = "Downloaded";
             var defaultPathToListOfUrls = "download_list.txt";
 
@@ -25,8 +31,7 @@ namespace FileDownloaderDemoApp
             EnsureDirectoryCreated(defaultPathToSave);
 
             var fileDownloader = new Downloader.FileDownloader();
-            fileDownloader.SetDegreeOfParallelism(2);
-
+            fileDownloader.SetDegreeOfParallelism(10);
             fileDownloader.OnDownloaded += SucceessDownload;
             fileDownloader.OnFailed += FailedDownload;
 
@@ -42,32 +47,40 @@ namespace FileDownloaderDemoApp
                 }
             }
 
-            Console.WriteLine("To interrupt download process and exit, please press any key");
             Console.ReadKey();
         }
 
         private static void FailedDownload(string filePath, Exception exception)
         {
-            failedCount++;
+            lock (syncFailedCounter)
+            {
+                failedCount++;
+            }
 
             Console.WriteLine($"{exception.Message}");
+
             logger.Error($"{exception.Message}");
+
             if (exception.StackTrace != null)
             {
                 logger.Error($"{exception.StackTrace}");
             }
 
-
             UpdateInfoInCosole();
+
         }
 
         private static void SucceessDownload(string obj)
         {
-            downloadedCount++;
+            lock (syncDownloadCounter)
+            {
+                downloadedCount++;
+            }
 
             Console.WriteLine($"{obj} downloaded");
 
             UpdateInfoInCosole();
+
         }
 
         private static void UpdateInfoInCosole()
@@ -81,6 +94,7 @@ namespace FileDownloaderDemoApp
                 Console.WriteLine($"Precceded all urls. Successfuly download: {downloadedCount}. Failed: {failedCount}");
                 Console.WriteLine("Press any key to exit.");
             }
+
         }
 
         private static void EnsureDirectoryCreated(string path)
