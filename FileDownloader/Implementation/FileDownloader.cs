@@ -13,7 +13,6 @@ namespace FileDownloader.Implementation
     {
         public event Action<string> OnDownloaded;
         public event Action<string, Exception> OnFailed;
-        private event Action OnAddToQueue;
 
         private static int parallelismValue = 4;
         private static int threadCount = 0;
