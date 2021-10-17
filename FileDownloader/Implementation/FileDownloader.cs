@@ -23,7 +23,6 @@ namespace FileDownloader.Implementation
         Thread downloadThread;
 
         private static object sync_creating_task = new();
-        private static object syncCounterEdit = new();
 
         public FileDownloader()
         {
