@@ -52,12 +52,9 @@ namespace FileDownloader.Implementation
                 bool isSuccessful = downloadQueue.TryDequeue(out QueueItem queueItem);
                 if (isSuccessful)
                 {
-                    lock (syncCounterEdit)
-                    {
-                        threadCount++;
-                    }
                     lock (sync_creating_task)
                     {
+                        threadCount++;
                         downloadThread = new Thread(new ParameterizedThreadStart(DownloadFileAndSaveToDiskAsync));
                         downloadThread.Name = queueItem.FileId;
                         downloadThread.Start(queueItem);
@@ -110,7 +107,7 @@ namespace FileDownloader.Implementation
                 }
                 OnDownloaded?.Invoke(queueItem.FileId);
             }
-            lock (syncCounterEdit)
+            lock (sync_creating_task)
             {
                 threadCount--;
             }
