@@ -24,23 +24,10 @@ namespace FileDownloader.Implementation
 
         private static object sync_creating_task = new();
 
-        public FileDownloader()
-        {
-            Task.Run(() =>
-            {
-                while (true)
-                {
-                    if (threadCount <= parallelismValue && !downloadQueue.IsEmpty)
-                    {
-                        TryToGetItemForDownload();
-                    };
-                };
-            });
-        }
-
         public void AddFileToDownloadingQueue(string fileId, string url, string pathToSave)
         {
             downloadQueue.Enqueue(new QueueItem() { FileId = fileId, Url = url, PathToSave = pathToSave });
+            TryToGetItemForDownload();
         }
 
         private void TryToGetItemForDownload()
@@ -108,6 +95,11 @@ namespace FileDownloader.Implementation
             lock (sync_creating_task)
             {
                 threadCount--;
+            }
+
+            if (threadCount <= parallelismValue && !downloadQueue.IsEmpty)
+            {
+                TryToGetItemForDownload();
             }
         }
 
