@@ -27,7 +27,11 @@ namespace FileDownloader.Implementation
         public void AddFileToDownloadingQueue(string fileId, string url, string pathToSave)
         {
             downloadQueue.Enqueue(new QueueItem() { FileId = fileId, Url = url, PathToSave = pathToSave });
-            TryToGetItemForDownload();
+
+            if (threadCount < parallelismValue && !downloadQueue.IsEmpty)
+            {
+                TryToGetItemForDownload();
+            }
         }
 
         private void TryToGetItemForDownload()
