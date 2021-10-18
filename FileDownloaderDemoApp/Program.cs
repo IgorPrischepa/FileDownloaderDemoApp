@@ -29,7 +29,7 @@ namespace FileDownloaderDemoApp
             EnsureDirectoryCreated(defaultPathToSave);
 
             var fileDownloader = new Downloader.FileDownloader();
-            fileDownloader.SetDegreeOfParallelism(5);
+            fileDownloader.SetDegreeOfParallelism(1);
             fileDownloader.OnDownloaded += SucceessDownload;
             fileDownloader.OnFailed += FailedDownload;
 
@@ -62,8 +62,9 @@ namespace FileDownloaderDemoApp
             lock (syncAcccessToCounters)
             {
                 failedCount++;
-                UpdateInfoInCosole();
             }
+
+            UpdateInfoInCosole();
         }
 
         private static void SucceessDownload(string obj)
@@ -73,10 +74,8 @@ namespace FileDownloaderDemoApp
                 downloadedCount++;
 
                 Console.WriteLine($"{obj} downloaded");
-
-                UpdateInfoInCosole();
             }
-
+            UpdateInfoInCosole();
         }
 
         private static void UpdateInfoInCosole()
